@@ -18,7 +18,6 @@ from collections import OrderedDict
 
 import matplotlib.pyplot as plt
 
-
 import PIL
 from PIL import Image
 
@@ -38,6 +37,7 @@ parser.add_argument('--learning_rate', action='store', type=float, default=0.001
 parser.add_argument('--hidden_units', action='store', type=int, nargs=2, default=[512, 256], help="Sets number of hidden units")
 parser.add_argument('--epochs', action='store', type=int, default=2, help="Sets number of epochs")
 parser.add_argument('--gpu', action='store_true', default='cpu', help="Turn on GPU")
+#parser.add_argument('--save_dir', action='store', type=str, default='ck_points', help="Directory for checkpoints"
 
 args = parser.parse_args()
 
@@ -45,21 +45,24 @@ args = parser.parse_args()
 
 if args.data_dir != 'flowers':
     os.system('mkdir '+ args.data_dir)
-    print(args.data_dir)
+    print(args.data_dir, "<-----")
     os.chdir(str(args.data_dir))    # <<<<<<<<< problem here 
+    zzz = os.getcwd()
+    print(zzz, "<<-----")
     #zz = os.getcwd()
     #print(zz)
-    os.chdir('/home/workspace/ImageClassifier')
-    zzz = os.getcwd()
-    print(zzz)
+    #os.chdir('/home/workspace/ImageClassifier')
+    #zzz = os.getcwd()
+    #print(zzz)
     os.system('mkdir train')
     os.system('mkdir valid')
     os.system('mkdir test')
-    data_dir = args.data_dir
+    data_dir = os.getcwd()  
     train_dir = data_dir + '/train'
     valid_dir = data_dir + '/valid'
     test_dir = data_dir + '/test'
-    print('$$$$$$.    ', train_dir, '  ', valid_dir, '   ', test_dir)
+    print('$$$$$$.    ', data_dir, '   ', train_dir, '  ', valid_dir, '   ', test_dir)
+    # NEED TO COPY FLOWER IMAGES INTO TEH NEW DIRECTORIES
 else:
     data_dir = 'flowers'
     train_dir = data_dir + '/train'
@@ -67,6 +70,8 @@ else:
     test_dir = data_dir + '/test'
 
 
+    
+    
 # Create data transforms 
 print("Starting Transforms")
 train_transforms = transforms.Compose([transforms.RandomRotation(30),
@@ -87,7 +92,10 @@ test_transforms = transforms.Compose([transforms.Resize(255),
                                      transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225))])
 
 # Load the datasets with ImageFolder
-print('-------------   ', train_dir)
+
+zz = os.getcwd()
+print('========', zz)
+print('-------------   ', train_dir, ' --- ', valid_dir, ' --- ', test_dir)
 train_data = datasets.ImageFolder(train_dir, transform = train_transforms)
 
 image_datasets = train_data
@@ -110,7 +118,7 @@ with open('cat_to_name.json', 'r') as f:
     cat_to_name = json.load(f)
     
 
-# Move to GPU is available
+# Move to GPU if available
 
 if args.gpu == True:
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -125,20 +133,20 @@ model = getattr(models, args.arch)(pretrained=True)
 #model = models.vgg16(pretrained=True)
 
 
-# Freeze parametes to avoid backprop
+# Freeze parameters to avoid backprop
 for param in model.parameters():
     param.requires_grad=False
 
 
 # Define the model   
 model.classifier = nn.Sequential(OrderedDict([
-                            ('fc1', nn.Linear(25088, hu1)),
+                            ('fc1', nn.Linear(25088, args.hidden_units[0])),
                             ('relu1', nn.ReLU()),
                             ('dropout1', nn.Dropout(0.2)),
-                            ('fc2', nn.Linear(hu1, hu2)),
+                            ('fc2', nn.Linear(args.hidden_units[0], args.hidden_units[1])),
                             ('relu2', nn.ReLU()),
                             ('dropout2', nn.Dropout(0.2)),
-                            ('fc3', nn.Linear(hu2, 102)),
+                            ('fc3', nn.Linear(args.hidden_units[1], 102)),
                             ('output', nn.LogSoftmax(dim=1))
                             ]))
 
